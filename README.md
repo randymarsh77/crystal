@@ -1,4 +1,4 @@
-# astream
+# Crystal
 Low latency, synchronized, live audio streaming in Swift. Use with [Soundflower](https://github.com/mattingalls/Soundflower) or any other audio input source.
 
 ## Why
