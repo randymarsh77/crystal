@@ -12,26 +12,20 @@ Approaching lower latency. Currently, system latency is set to 400ms but can wor
 
 ## Getting Started
 
-`swift package init --type executable`
-`swift build`
+- `swift package init --type executable`
+- `swift build`
 
 ### Commandline targets
 
-Write code.
-
-`swift build`
+- Write code.
+- `swift build`
 
 ### Xcode applications
 
-`swift build`
-
-`swift package generate-xcodeproj`
-
-Link `CAsync` to `CoreFoundation`
-
-Add a 'Copy Files' build phase, set the destinaton to 'Frameworks', add all the dependent products frameworks.
-
-Write code.
+- `swift package generate-xcodeproj`
+- Link `CAsync` to `CoreFoundation`
+- Add a 'Copy Files' build phase, set the destinaton to 'Frameworks', add all the dependent products frameworks.
+- Write code.
 
 ## Future / Roadmap
 
