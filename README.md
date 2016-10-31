@@ -6,7 +6,32 @@ Think [Sonos](http://www.sonos.com/) but without all the expensive equipment or 
 
 ## Status
 
+Works. See the [example](https://github.com/randymarsh77/crystal/blob/master/example.md). 
+
 Approaching lower latency. Currently, system latency is set to 400ms but can work at 50ms if the network and target devices can support it. Total e2e latency is closer to 1s. System latency being time from record input callback to speaker and e2e being from time output is fed to Soundflower to speaker. Next step on this front is adaptive latency optimized by aggregated ping results. Then, internalizing a Soundflower driver to cut out some of the redundancy.
+
+## Getting Started
+
+`swift package init --type executable`
+`swift build`
+
+### Commandline targets
+
+Write code.
+
+`swift build`
+
+### Xcode applications
+
+`swift build`
+
+`swift package generate-xcodeproj`
+
+Link `CAsync` to `CoreFoundation`
+
+Add a 'Copy Files' build phase, set the destinaton to 'Frameworks', add all the dependent products frameworks.
+
+Write code.
 
 ## Future / Roadmap
 
