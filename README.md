@@ -1,6 +1,11 @@
 # Crystal
 Low latency, synchronized, live audio streaming in Swift. Use with [Soundflower](https://github.com/mattingalls/Soundflower) or any other audio input source.
 
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)]()
+[![GitHub release](https://img.shields.io/github/release/randymarsh77/crystal.svg)]()
+[![SPM](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
+[![Build Status](https://api.travis-ci.org/randymarsh77/crystal.svg?branch=master)](https://travis-ci.org/randymarsh77/crystal)
+
 ## Why
 Think [Sonos](http://www.sonos.com/) but without all the expensive equipment or restricted audio sources.  More like [Airfoil](https://rogueamoeba.com/airfoil/) and/or/combined with the other software from [RogueAmoeba](https://rogueamoeba.com).
 
