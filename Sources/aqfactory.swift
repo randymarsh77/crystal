@@ -6,7 +6,7 @@ func aqInputCallback(userData: UnsafeMutableRawPointer?, queue: AudioQueueRef, b
 {
 	let buffer = bufferPointer.pointee
 	let data = Data(bytes: buffer.mAudioData, count: Int(buffer.mAudioDataByteSize))
-	let callbackData = AQInputData(data: data, ts: ts, pdc: pdc, pd: pd!)
+	let callbackData = AQInputData(data: data, ts: ts, pdc: pdc, pd: pd)
 
 	let userDataPrime: UnsafePointer<AQInputUserData>? = Cast(userData)
 	userDataPrime!.pointee.callback(callbackData)
@@ -32,10 +32,10 @@ struct AQOutputUserData
 
 public struct AQInputData
 {
-	var data: Data
-	var ts: UnsafePointer<AudioTimeStamp>?
-	var pdc: UInt32
-	var pd: UnsafePointer<AudioStreamPacketDescription>
+	public var data: Data
+	public var ts: UnsafePointer<AudioTimeStamp>?
+	public var pdc: UInt32
+	public var pd: UnsafePointer<AudioStreamPacketDescription>?
 }
 
 public class AQFactory
