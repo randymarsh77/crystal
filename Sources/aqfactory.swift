@@ -1,6 +1,7 @@
 import AudioToolbox
 import Foundation
 import Cast
+import Streams
 
 func aqInputCallback(userData: UnsafeMutableRawPointer?, queue: AudioQueueRef, bufferPointer: AudioQueueBufferRef, ts: UnsafePointer<AudioTimeStamp>, pdc: UInt32, pd: UnsafePointer<AudioStreamPacketDescription>?) -> Void
 {
@@ -40,6 +41,15 @@ public struct AQInputData
 
 public class AQFactory
 {
+	public static func CreateDefaultInputQueue(propertyData: UnsafeMutablePointer<AudioStreamBasicDescription>) throws -> (AudioQueueRef, ReadableStream<Data>)
+	{
+		let stream = Streams.Stream<Data>()
+		let queue = try CreateDefaultInputQueue(propertyData: propertyData) { data in
+			stream.publish(data.data)
+		}
+		return (queue, ReadableStream(stream))
+	}
+
 	public static func CreateDefaultInputQueue(propertyData: UnsafeMutablePointer<AudioStreamBasicDescription>, callback: @escaping (_ data: AQInputData) -> Void) throws -> AudioQueueRef
 	{
 		let userData = UnsafeMutablePointer<AQInputUserData>.allocate(capacity: 1)
