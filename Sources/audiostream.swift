@@ -5,7 +5,7 @@ import Streams
 
 public extension Socket
 {
-	public func CreateAudioStream() -> ReadableStream<AudioData>
+	public func createAudioStream() -> ReadableStream<AudioData>
 	{
 		let stream = Streams.Stream<AudioData>()
 		var description: AudioStreamBasicDescription? = nil

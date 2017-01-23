@@ -24,7 +24,7 @@ struct ACDataSupplierUserData
 
 public extension IReadableStream where ChunkType == AudioData
 {
-	public func Convert(to: AudioFormatID) -> ReadableStream<AudioData>
+	public func convert(to: AudioFormatID) -> ReadableStream<AudioData>
 	{
 		var converterCreated = false
 		let converter = UnsafeMutablePointer<AudioConverterRef?>.allocate(capacity: 1)
