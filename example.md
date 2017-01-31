@@ -69,9 +69,7 @@ DispatchQueue.global(qos: .default).async {
     using ((try! client.tryConnect())!) { (socket: Socket) in
       socket.pong()
       _ = socket.createAudioStream()
-        .convert(to: kAudioFormatLinearPCM)
         .pipe(to: AudioStreamPlayer().stream)
-        .pipe(to: Visualizer().stream) // Assuming you made one of these
 
         await (UntilPigsFly())
     }
@@ -80,10 +78,9 @@ DispatchQueue.global(qos: .default).async {
   }
 }
 
-func UntilPigsFly() -> Task<Void>
-{
-	return async {
-		Async.Suspend()
-	}
+func UntilPigsFly() -> Task<Void> {
+  return async {
+    Async.Suspend()
+  }
 }
 ```
