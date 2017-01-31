@@ -71,6 +71,7 @@ public class AQPlayer
 	{
 		self.currentBuffer = try! self.genBuffer!(length)
 		memcpy(self.currentBuffer!.pointee.mAudioData.advanced(by: Int(self.currentPosition)), data, Int(length))
+		self.currentPosition += length
 
 		try! self.advanceBuffer()
 	}

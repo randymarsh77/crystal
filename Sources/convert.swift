@@ -9,7 +9,8 @@ func acDataSupplier(converter: AudioConverterRef, ioNumberDataPackets: UnsafeMut
 	let data = userDataPrime!.pointee.data.pointee
 
 	// Only supporting one callback from a compressed format to PCM
-	assert(ioNumberDataPackets.pointee == data.packetInfo!.count)
+	assert(ioNumberDataPackets.pointee <= data.packetInfo!.count)
+	ioNumberDataPackets.pointee = data.packetInfo!.count
 
 	ioData.initialize(to: data.toBufferList())
 	outDataPacketDescription?.initialize(to: data.packetInfo!.descriptions)
@@ -45,11 +46,12 @@ public extension IReadableStream where ChunkType == AudioData
 			userData.initialize(to: ACDataSupplierUserData(data: dataRef))
 
 			let ioOutPacketCount = UnsafeMutablePointer<UInt32>.allocate(capacity: 1)
-			ioOutPacketCount.initialize(to: 0)
+			ioOutPacketCount.initialize(to: 512)
 
 			let outOutData = UnsafeMutablePointer<AudioBufferList>.allocate(capacity: 1)
+			outOutData.initialize(to: AudioBufferList(mNumberBuffers: 1, mBuffers: AudioBuffer(mNumberChannels: 2, mDataByteSize: 1024, mData: malloc(1024*2))))
 
-			AudioConverterFillComplexBuffer(converter.pointee!,
+			_ = AudioConverterFillComplexBuffer(converter.pointee!,
 				acDataSupplier,
 				userData,
 				ioOutPacketCount,

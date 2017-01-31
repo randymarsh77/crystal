@@ -25,8 +25,12 @@ public extension AudioData
 {
 	public func toBufferList() -> AudioBufferList
 	{
-		let buffer = AudioBuffer(mNumberChannels: self.description.mChannelsPerFrame, mDataByteSize: UInt32(self.data.count), mData: nil)
-		return AudioBufferList(mNumberBuffers: 1, mBuffers: buffer)
+		var buffer: AudioBuffer? = nil
+		self.data.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
+			let b = UnsafeMutablePointer(mutating: bytes)
+			buffer = AudioBuffer(mNumberChannels: self.description.mChannelsPerFrame, mDataByteSize: UInt32(self.data.count), mData: b)
+		}
+		return AudioBufferList(mNumberBuffers: 1, mBuffers: buffer!)
 	}
 }
 
@@ -35,6 +39,10 @@ public extension AudioBufferList
 	public func toAudioData(using: AudioStreamBasicDescription, startingAt: AudioTimeStamp?) -> [AudioData]
 	{
 		var datas = [AudioData]()
+		if (self.mNumberBuffers == 0) {
+			print("0 buffers")
+			return datas
+		}
 
 		// Assume one buffer for now
 		assert(self.mNumberBuffers == 1)
