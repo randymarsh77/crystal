@@ -1,29 +1,26 @@
 import Foundation
+import IDisposable
 import Scope
 import Sockets
 
-public class StreamServer
+public class StreamServer : IDisposable
 {
 	var stream: SynchronizedDataStreamWithMetadata<Double>
 	var synchronizer: TimeSynchronizer
 	var connections: Array<Connection>
 	var tcpServer: TCPServer?
 
-	public init(stream: SynchronizedDataStreamWithMetadata<Double>)
+	public init(stream: SynchronizedDataStreamWithMetadata<Double>, port: UInt16)
 	{
 		self.stream = stream
 		self.synchronizer = TimeSynchronizer()
 		self.connections = Array<Connection>()
-	}
-
-	public func start() -> Void
-	{
-		self.tcpServer = TCPServer(port: 7734) { (socket) in
+		self.tcpServer = TCPServer(port: port) { (socket) in
 			self.addConnection(socket: socket)
 		}
 	}
 
-	public func stop() -> Void
+	public func dispose() -> Void
 	{
 		for connection in self.connections {
 			connection.dispose()
