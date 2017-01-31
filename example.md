@@ -67,14 +67,23 @@ DispatchQueue.global(qos: .default).async {
     await(Bonjour.Resolve(service))
     let client = TCPClient(endpoint: service.getEndpointAddress()!)
     using ((try! client.tryConnect())!) { (socket: Socket) in
-      socket.Pong()
-      let player = AudioStreamPlayer()
-      while let data = socket.read(maxBytes: 4 * 1024) {
-        player.stream.publish(chunk: data)
-      }
+      socket.pong()
+      _ = socket.createAudioStream()
+						.convert(to: kAudioFormatLinearPCM)
+						.pipe(to: AudioStreamPlayer().stream)
+						.pipe(to: Visualizer().stream) // Assuming you made one of these
+
+					await (UntilPigsFly())
     }
   } else {
     NSLog("No services found")
   }
+}
+
+func UntilPigsFly() -> Task<Void>
+{
+	return async {
+		Async.Suspend()
+	}
 }
 ```
