@@ -69,11 +69,11 @@ DispatchQueue.global(qos: .default).async {
     using ((try! client.tryConnect())!) { (socket: Socket) in
       socket.pong()
       _ = socket.createAudioStream()
-						.convert(to: kAudioFormatLinearPCM)
-						.pipe(to: AudioStreamPlayer().stream)
-						.pipe(to: Visualizer().stream) // Assuming you made one of these
+        .convert(to: kAudioFormatLinearPCM)
+        .pipe(to: AudioStreamPlayer().stream)
+        .pipe(to: Visualizer().stream) // Assuming you made one of these
 
-					await (UntilPigsFly())
+        await (UntilPigsFly())
     }
   } else {
     NSLog("No services found")
