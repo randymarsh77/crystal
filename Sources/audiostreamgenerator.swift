@@ -1,12 +1,11 @@
 import AudioToolbox
 import Foundation
+import IDisposable
 import Time
 
-public class AudioStreamGenerator
+public class AudioStreamGenerator : IDisposable
 {
 	public var stream: SynchronizedDataStreamWithMetadata<Double>
-
-	var running: Bool = false
 	var queue: AudioQueueRef? = nil
 
 	public init()
@@ -22,18 +21,12 @@ public class AudioStreamGenerator
 		}
 
 		self.queue = queue
-	}
-
-	public func start()
-	{
-		if running { return }
-		running = true
 		AudioQueueStart(self.queue!, nil)
+
 	}
 
-	public func stop()
+	public func dispose()
 	{
-		if !running { return }
 		AudioQueueStop(self.queue!, false)
 	}
 }
