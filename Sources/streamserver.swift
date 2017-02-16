@@ -2,15 +2,16 @@ import Foundation
 import IDisposable
 import Scope
 import Sockets
+import Time
 
 public class StreamServer : IDisposable
 {
-	var stream: SynchronizedDataStreamWithMetadata<Double>
+	var stream: SynchronizedDataStreamWithMetadata<Time>
 	var synchronizer: TimeSynchronizer
 	var connections: Array<Connection>
 	var tcpServer: TCPServer?
 
-	public init(stream: SynchronizedDataStreamWithMetadata<Double>, port: UInt16)
+	public init(stream: SynchronizedDataStreamWithMetadata<Time>, port: UInt16)
 	{
 		self.stream = stream
 		self.synchronizer = TimeSynchronizer()
@@ -34,8 +35,8 @@ public class StreamServer : IDisposable
 	{
 		let token = self.synchronizer.addTarget(socket)
 		let subscription = self.stream.addSubscriber { (data, metadata) in
-			let (start, guess) = self.synchronizer.syncTarget(token: token, time: metadata)
-			let header = SNSUtility.GenerateHeader(start: start, guess: guess)
+			let synchronization = self.synchronizer.syncTarget(token: token, time: metadata)
+			let header = SNSUtility.GenerateHeader(synchronization: synchronization)
 			socket.write(header)
 			socket.write(data)
 		}

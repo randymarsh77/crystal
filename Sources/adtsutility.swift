@@ -89,11 +89,11 @@ public class ADTSUtility
 						let snsHeaderChunk = Data(bytesNoCopy: bytes, count: SNSHeaderLength, deallocator: .none)
 						if SNSUtility.IsValidHeader(chunk: snsHeaderChunk)
 						{
-							let (start, guess) = try! SNSUtility.ParseHeader(chunk: snsHeaderChunk)
-							let actualStart = start + (Time.Current() - guess)
+							let synchronization = try! SNSUtility.ParseHeader(chunk: snsHeaderChunk)
+							let actualStart = synchronization.syncTime + (Time.Now - synchronization.recieveGuess)
 							let timeData = UnsafeMutablePointer<AudioTimeStamp>.allocate(capacity: 1)
 							timeData.initialize(to: AudioTimeStamp())
-							timeData.pointee.mHostTime = Time.ConvertToTimeStamp(actualStart)
+							timeData.pointee.mHostTime = actualStart.machTimeStamp
 							timeData.pointee.mFlags = .hostTimeValid
 
 							startTime = UnsafePointer(timeData)

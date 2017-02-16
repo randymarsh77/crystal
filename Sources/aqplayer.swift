@@ -144,7 +144,6 @@ public class AQPlayer
 
 	func play() throws
 	{
-		print("CurrentHost: ", Time.ConvertToTimeStamp(Time.Current()))
 		let playResult = AudioQueueStart(self.queue!, self.startTime)
 		if (playResult != 0)
 		{
