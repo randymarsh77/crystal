@@ -10,10 +10,7 @@ The following snippet implements a simple audio streaming server using Crystal. 
 import Foundation
 import Bonjour
 import Crystal
-import Time
 import Using
-
-Time.Initialize()
 
 let port = 4321
 let settings = BroadcastSettings(
@@ -41,13 +38,10 @@ import Async
 import Bonjour
 import Crystal
 import Sockets
-import Time
 import Using
 
 ...
 
-
-Time.Initialize()
 Async.Schedule(q: DispatchQueue.main)
 
 let session = AVAudioSession.sharedInstance()
