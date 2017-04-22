@@ -6,17 +6,15 @@ import Time
 
 public class StreamServer : IDisposable
 {
-	var stream: SynchronizedDataStreamWithMetadata<Time>
-	var synchronizer: TimeSynchronizer
-	var connections: Array<Connection>
+	let stream: SynchronizedDataStreamWithMetadata<Time>
+	let synchronizer = TimeSynchronizer()
 	var tcpServer: TCPServer?
+	var connections = [Connection]()
 
-	public init(stream: SynchronizedDataStreamWithMetadata<Time>, port: UInt16)
+	public init(stream: SynchronizedDataStreamWithMetadata<Time>, port: UInt16) throws
 	{
 		self.stream = stream
-		self.synchronizer = TimeSynchronizer()
-		self.connections = Array<Connection>()
-		self.tcpServer = TCPServer(port: port) { (socket) in
+		self.tcpServer = try TCPServer(options: ServerOptions(port: .Specific(port))) { (socket) in
 			self.addConnection(socket: socket)
 		}
 	}
@@ -27,7 +25,7 @@ public class StreamServer : IDisposable
 			connection.dispose()
 		}
 		self.connections.removeAll()
-		self.tcpServer!.dispose()
+		self.tcpServer?.dispose()
 		self.tcpServer = nil
 	}
 
