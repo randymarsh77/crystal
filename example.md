@@ -14,11 +14,12 @@ import Using
 
 let port = 4321
 let settings = BroadcastSettings(
-name: "host",
-serviceType: .Unregistered(identifier: "_crystal"),
-serviceProtocol: .TCP,
-domain: .AnyDomain,
-port: Int32(port))
+  name: "host",
+  serviceType: .Unregistered(identifier: "_crystal"),
+  serviceProtocol: .TCP,
+  domain: .AnyDomain,
+  port: Int32(port)
+)
 
 using (AudioStreamGenerator()) { (generator: AudioStreamGenerator) in
 using (StreamServer(stream: generator.stream, port: UInt16(port))) {
