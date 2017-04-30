@@ -1,5 +1,18 @@
 language: objective-c
 osx_image: xcode8.2
+node_js:
+  - "6"
+
+before_script:
+  - npm install -g swiftx
 
 script:
   - swift build
+
+after_success:
+  - swiftx update-build-config --owner randymarsh77 --configPath builds/swift/config
+  - swiftx update-dependency-graph --owner randymarsh77 --configPath builds/swift/config
+  - swiftx trigger-downstream-builds --owner randymarsh77 --configPath builds/swift/config
+
+after_failure:
+  - swiftx trigger-downstream-builds --owner randymarsh77 --configPath builds/swift/config --force
