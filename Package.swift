@@ -1,13 +1,33 @@
+// swift-tools-version:5.1
 import PackageDescription
 
 let package = Package(
-    name: "Crystal",
-    dependencies: [
-		.Package(url: "https://github.com/randymarsh77/cancellation", majorVersion: 1),
-		.Package(url: "https://github.com/randymarsh77/cast", majorVersion: 1),
-		.Package(url: "https://github.com/randymarsh77/scope", majorVersion: 1),
-		.Package(url: "https://github.com/randymarsh77/sockets", majorVersion: 1),
-		.Package(url: "https://github.com/randymarsh77/streams", majorVersion: 0),
-		.Package(url: "https://github.com/randymarsh77/time", majorVersion: 2),
+	name: "Crystal",
+	products: [
+		.library(
+			name: "Crystal",
+			targets: ["Crystal"]
+		),
+	],
+	dependencies: [
+		.package(url: "https://github.com/randymarsh77/cancellation", .branch("master")),
+		.package(url: "https://github.com/randymarsh77/cast", .branch("master")),
+		.package(url: "https://github.com/randymarsh77/scope", .branch("master")),
+		.package(url: "https://github.com/randymarsh77/sockets", .branch("master")),
+		.package(url: "https://github.com/randymarsh77/streams", .branch("master")),
+		.package(url: "https://github.com/randymarsh77/time", .branch("master")),
+	],
+	targets: [
+		.target(
+			name: "Crystal",
+			dependencies: [
+				"Cancellation",
+				"Cast",
+				"Scope",
+				"Sockets",
+				"Streams",
+				"Time",
+			]
+		),
 	]
 )

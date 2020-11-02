@@ -33,7 +33,7 @@ public class SynchronizedDataStream
 	func removeSubscriber(subscriber: Subscriber) -> Void
 	{
 		self.syncQueue.async {
-			let i = self.subscribers.index(where: { (x) -> Bool in
+			let i = self.subscribers.firstIndex(where: { (x) -> Bool in
 				return x === subscriber
 			})
 			self.subscribers.remove(at: i!)
@@ -83,7 +83,7 @@ public class SynchronizedDataStreamWithMetadata<T>
 	func removeSubscriber(subscriber: Subscriber<T>) -> Void
 	{
 		self.syncQueue.async {
-			let i = self.subscribers.index(where: { (x) -> Bool in
+			let i = self.subscribers.firstIndex(where: { (x) -> Bool in
 				return x === subscriber
 			})
 			self.subscribers.remove(at: i!)

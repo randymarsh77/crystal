@@ -23,7 +23,7 @@ public struct AudioData
 
 public extension AudioData
 {
-	public func toBufferList() -> AudioBufferList
+	func toBufferList() -> AudioBufferList
 	{
 		var buffer: AudioBuffer? = nil
 		self.data.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
@@ -36,7 +36,7 @@ public extension AudioData
 
 public extension AudioBufferList
 {
-	public func toAudioData(using: AudioStreamBasicDescription, startingAt: AudioTimeStamp?) -> [AudioData]
+	func toAudioData(using: AudioStreamBasicDescription, startingAt: AudioTimeStamp?) -> [AudioData]
 	{
 		var datas = [AudioData]()
 		if (self.mNumberBuffers == 0) {

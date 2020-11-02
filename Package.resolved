@@ -1,0 +1,79 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Cancellation",
+        "repositoryURL": "https://github.com/randymarsh77/cancellation",
+        "state": {
+          "branch": "master",
+          "revision": "480b35fc426e8d63502bc60b5cbd7e4fa6a860be",
+          "version": null
+        }
+      },
+      {
+        "package": "Cast",
+        "repositoryURL": "https://github.com/randymarsh77/cast",
+        "state": {
+          "branch": "master",
+          "revision": "f94de6b8b65ef5c710461fa98e5a83fafb683fab",
+          "version": null
+        }
+      },
+      {
+        "package": "CryptoSwift",
+        "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift",
+        "state": {
+          "branch": null,
+          "revision": "39f08ac5269361a50c08ce1e2f41989bfc4b1ec8",
+          "version": "1.3.1"
+        }
+      },
+      {
+        "package": "IDisposable",
+        "repositoryURL": "https://github.com/randymarsh77/idisposable",
+        "state": {
+          "branch": "master",
+          "revision": "9d2d4c032fdca4d0d81ec191bfcc71c91e88b178",
+          "version": null
+        }
+      },
+      {
+        "package": "Scope",
+        "repositoryURL": "https://github.com/randymarsh77/scope",
+        "state": {
+          "branch": "master",
+          "revision": "3c797592601ba184e0b3efec6f3c9fba125a000c",
+          "version": null
+        }
+      },
+      {
+        "package": "Sockets",
+        "repositoryURL": "https://github.com/randymarsh77/sockets",
+        "state": {
+          "branch": "master",
+          "revision": "be2671cf858fc0621d729a5500db013e443eb96c",
+          "version": null
+        }
+      },
+      {
+        "package": "Streams",
+        "repositoryURL": "https://github.com/randymarsh77/streams",
+        "state": {
+          "branch": "master",
+          "revision": "28296bb955e0b5885315aac445933e5bf73166a6",
+          "version": null
+        }
+      },
+      {
+        "package": "Time",
+        "repositoryURL": "https://github.com/randymarsh77/time",
+        "state": {
+          "branch": "master",
+          "revision": "c47ae7f1d718458b989e18f2b8bdde45453bc03e",
+          "version": null
+        }
+      }
+    ]
+  },
+  "version": 1
+}
