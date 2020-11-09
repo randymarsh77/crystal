@@ -45,7 +45,9 @@ public class AQFactory
 	{
 		let stream = Streams.Stream<Data>()
 		let queue = try CreateDefaultInputQueue(propertyData: propertyData) { data in
-			stream.publish(data.data)
+			if (data.data.count != 0) {
+				stream.publish(data.data)
+			}
 		}
 		return (queue, ReadableStream(stream))
 	}
