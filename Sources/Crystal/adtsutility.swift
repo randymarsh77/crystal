@@ -43,17 +43,16 @@ public class ADTSUtility
 				let packetSize = pd.mDataByteSize
 				let frameLength: UInt16 = UInt16(packetSize) + UInt16(headerLength)
 
-				let crc: UInt16? = options.crc ?
-					inputData.data.withUnsafeBytes() { (audioData: UnsafePointer<UInt8>) -> UInt16 in
-						Checksum.crc16(Array(UnsafeBufferPointer(start: audioData.advanced(by: Int(packetOffset)), count: Int(packetSize))))
-					} : nil
+				let crc: UInt16? = options.crc
+					? Checksum.crc16([UInt8](inputData.data.advanced(by: Int(packetOffset)).prefix(upTo: Int(packetSize))))
+					: nil
 
 				WriteHeader(data: currentPosition, options: options, frameLength: frameLength, crc: crc)
 
 				currentPosition = currentPosition.advanced(by: headerLength)
 
-				inputData.data.withUnsafeBytes() { (audioData: UnsafePointer<UInt8>) -> () in
-					memcpy(currentPosition, audioData.advanced(by: Int(packetOffset)), Int(packetSize))
+				inputData.data.withUnsafeBytes() { (audioData: UnsafeRawBufferPointer) -> () in
+					memcpy(currentPosition, audioData.baseAddress!.advanced(by: Int(packetOffset)), Int(packetSize))
 				}
 
 				currentPosition = currentPosition.advanced(by: Int(packetSize))
@@ -76,8 +75,8 @@ public class ADTSUtility
 			var startTime: UnsafePointer<AudioTimeStamp>? = nil
 
 			var position = 0
-			var bytes = chunk.withUnsafeBytes() { (bytes: UnsafePointer<UInt8>) -> UnsafeMutablePointer<UInt8> in
-				UnsafeMutablePointer<UInt8>(mutating: bytes)
+			var bytes = chunk.withUnsafeBytes() {
+				UnsafeMutablePointer<UInt8>(mutating: $0.baseAddress!.assumingMemoryBound(to: UInt8.self))
 			}
 			while position < chunk.count - MaxHeaderSize
 			{

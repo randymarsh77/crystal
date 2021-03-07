@@ -55,8 +55,8 @@ public class AQPlayer
 
 		if cookieData != nil
 		{
-			let result = cookieData!.withUnsafeBytes() { (bytes: UnsafePointer) -> OSStatus in
-				AudioQueueSetProperty(self.queue!, kAudioQueueProperty_MagicCookie, bytes, UInt32(cookieData!.count))
+			let result = cookieData!.withUnsafeBytes() {
+				AudioQueueSetProperty(self.queue!, kAudioQueueProperty_MagicCookie, $0.baseAddress!, UInt32(cookieData!.count))
 			}
 			if (result != 0)
 			{

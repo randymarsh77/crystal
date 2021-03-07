@@ -130,11 +130,11 @@ class StreamContext
 	func addBufferedData(data: Data) throws -> Void
 	{
 		self.expect = data.count
-		let result = data.withUnsafeBytes() { (bytes: UnsafePointer<UInt8>) -> OSStatus in
+		let result = data.withUnsafeBytes() {
 			AudioFileStreamParseBytes(
 				self.streamId,
 				UInt32(data.count),
-				bytes,
+				$0.baseAddress!,
 				AudioFileStreamParseFlags.discontinuity)
 		}
 
@@ -182,8 +182,8 @@ class CustomStreamContext
 		var bufferedData = data
 		if (self.bufferPosition > 0)
 		{
-			data.withUnsafeBytes() { (bytes: UnsafePointer<UInt8>) -> () in
-				memcpy(self.buffer.advanced(by: self.bufferPosition), bytes, data.count)
+			_ = data.withUnsafeBytes() {
+				memcpy(self.buffer.advanced(by: self.bufferPosition), $0.baseAddress!, data.count)
 			}
 			self.bufferPosition += data.count
 			bufferedData = Data(bytesNoCopy: self.buffer.bindMemory(to: UInt8.self, capacity: self.bufferPosition), count: self.bufferPosition, deallocator: .none)
@@ -193,11 +193,11 @@ class CustomStreamContext
 		if (parsed != nil)
 		{
 			let pd = UnsafeMutablePointer<AudioStreamPacketDescription>(mutating: parsed!.pd)
-			parsed!.data.withUnsafeBytes() { (bytes: UnsafePointer<UInt8>) -> () in
+			parsed!.data.withUnsafeBytes() {
 				self.onPackets(
 					UInt32(parsed!.data.count),
 					parsed!.pdc,
-					bytes,
+					$0.baseAddress!,
 					pd,
 					parsed!.ts)
 			}
@@ -205,8 +205,8 @@ class CustomStreamContext
 
 		if (leftovers != nil)
 		{
-			leftovers!.withUnsafeBytes() { (bytes) -> () in
-				memcpy(self.buffer, bytes, leftovers!.count)
+			_ = leftovers!.withUnsafeBytes() {
+				memcpy(self.buffer, $0.baseAddress!, leftovers!.count)
 			}
 			self.bufferPosition = leftovers!.count
 		}

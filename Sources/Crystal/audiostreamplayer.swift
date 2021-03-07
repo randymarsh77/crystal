@@ -41,8 +41,8 @@ public class V2AudioStreamPlayer
 				try! player.initialize(asbd: p, cookieData: nil)
 				isInitialized = true
 			}
-			data.data.withUnsafeBytes() { (bytes: UnsafePointer<UInt8>) in
-				player.playPackets!(UInt32(data.data.count), data.packetInfo?.count ?? 0, bytes, data.packetInfo?.descriptions, AsPointer(data.startTime))
+			data.data.withUnsafeBytes() {
+				player.playPackets!(UInt32(data.data.count), data.packetInfo?.count ?? 0, $0.baseAddress!, data.packetInfo?.descriptions, AsPointer(data.startTime))
 			}
 		}
 		stream = WriteableStream(s)

@@ -7,7 +7,7 @@ import Streams
 
 public extension Socket
 {
-	public func createAudioStream() -> ReadableStream<AudioData>
+	func createAudioStream() -> ReadableStream<AudioData>
 	{
 		let tokenSource = CancellationTokenSource()
 		let stream = Streams.Stream<AudioData>()

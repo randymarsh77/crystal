@@ -26,8 +26,8 @@ public extension AudioData
 	func toBufferList() -> AudioBufferList
 	{
 		var buffer: AudioBuffer? = nil
-		self.data.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
-			let b = UnsafeMutablePointer(mutating: bytes)
+		self.data.withUnsafeBytes {
+			let b = UnsafeMutablePointer(mutating: $0.baseAddress!.assumingMemoryBound(to: UInt8.self))
 			buffer = AudioBuffer(mNumberChannels: self.description.mChannelsPerFrame, mDataByteSize: UInt32(self.data.count), mData: b)
 		}
 		return AudioBufferList(mNumberBuffers: 1, mBuffers: buffer!)
