@@ -100,7 +100,7 @@ func afsPropertyListener(userData: UnsafeMutableRawPointer, fs: AudioFileStreamI
 	context.onReady(afsId, asbd, nil)
 }
 
-func afsPackets(userData: UnsafeMutableRawPointer, numBytes: UInt32, numPackets: UInt32, inputData: UnsafeRawPointer, packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>) -> Void
+func afsPackets(userData: UnsafeMutableRawPointer, numBytes: UInt32, numPackets: UInt32, inputData: UnsafeRawPointer, packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>?) -> Void
 {
 	let context = userData.bindMemory(to: StreamContext.self, capacity: 1).pointee
 	context.expect = Int(numBytes)
