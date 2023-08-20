@@ -1,9 +1,10 @@
 import AudioToolbox
 import Foundation
 import Cast
+import IDisposable
 import Time
 
-public class AQPlayer
+public class AQPlayer : IDisposable
 {
 	public var playPackets: OnPacketsDelegate?
 
@@ -35,6 +36,15 @@ public class AQPlayer
 				self.fillBufferWithRaw(data: inputData, length: numBytes)
 			}
 		}
+	}
+
+	public func dispose() {
+		guard let queue = self.queue else {
+			return
+		}
+
+		AudioQueueStop(queue, true)
+		AudioQueueDispose(queue, true)
 	}
 
 	public func initialize(asbd: UnsafeMutablePointer<AudioStreamBasicDescription>, cookieData: Data?) throws -> Void

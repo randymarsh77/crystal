@@ -1,14 +1,16 @@
 import AudioToolbox
 import Cast
 import Foundation
+import IDisposable
 import Scope
 import Streams
 
-public class AudioStreamPlayer
+public class AudioStreamPlayer : IDisposable
 {
 	public var stream: SynchronizedDataStream
 
 	var subscription: Scope
+	var player: AQPlayer
 
 	public init()
 	{
@@ -22,19 +24,28 @@ public class AudioStreamPlayer
 		self.subscription = self.stream.addSubscriber() { (data: Data) -> Void in
 			try! parse(data)
 		}
+		self.player = player
+	}
+
+	public func dispose() {
+		self.subscription.dispose()
+		self.player.dispose()
 	}
 }
 
-public class V2AudioStreamPlayer
+public class V2AudioStreamPlayer : IDisposable
 {
 	public var stream: WriteableStream<AudioData>
+
+	var subscription: Scope
+	var player: AQPlayer
 
 	public init()
 	{
 		var isInitialized = false
 		let s = Streams.Stream<AudioData>()
 		let player = AQPlayer()
-		_ = s.subscribe { (data: AudioData) -> Void in
+		self.subscription = s.subscribe { (data: AudioData) -> Void in
 			if (!isInitialized) {
 				let p = UnsafeMutablePointer<AudioStreamBasicDescription>.allocate(capacity: 1)
 				p.initialize(to: data.description)
@@ -45,7 +56,13 @@ public class V2AudioStreamPlayer
 				player.playPackets!(UInt32(data.data.count), data.packetInfo?.count ?? 0, $0.baseAddress!, data.packetInfo?.descriptions, AsPointer(data.startTime))
 			}
 		}
-		stream = WriteableStream(s)
+		self.stream = WriteableStream(s)
+		self.player = player
+	}
+
+	public func dispose() {
+		self.subscription.dispose()
+		self.player.dispose()
 	}
 }
 
