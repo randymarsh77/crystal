@@ -41,12 +41,13 @@ public struct AQInputData
 
 public class AQFactory
 {
-	public static func CreateDefaultInputQueue(propertyData: UnsafeMutablePointer<AudioStreamBasicDescription>) throws -> (AudioQueueRef, ReadableStream<Data>)
+	public static func CreateDefaultInputQueue(propertyData: UnsafeMutablePointer<AudioStreamBasicDescription>) throws -> (AudioQueueRef, ReadableStream<AudioData>)
 	{
-		let stream = Streams.Stream<Data>()
-		let queue = try CreateDefaultInputQueue(propertyData: propertyData) { data in
-			if (data.data.count != 0) {
-				stream.publish(data.data)
+		let stream = Streams.Stream<AudioData>()
+		let queue = try CreateDefaultInputQueue(propertyData: propertyData) { aqInputData in
+			if (aqInputData.data.count != 0) {
+				let audioData = AudioData(description: propertyData.pointee, packetInfo: nil, data: aqInputData.data, startTime: aqInputData.ts?.pointee)
+				stream.publish(audioData)
 			}
 		}
 		return (queue, ReadableStream(stream))
