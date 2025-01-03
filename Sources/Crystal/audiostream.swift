@@ -1,36 +1,44 @@
 import AudioToolbox
-import Foundation
 import Cancellation
+import Foundation
 import Scope
 import Sockets
-import Streams
 
-public extension Socket
-{
-	func createAudioStream() -> ReadableStream<AudioData>
-	{
-		let tokenSource = CancellationTokenSource()
-		let stream = Streams.Stream<AudioData>()
-		stream.addDownstreamDisposable(Scope {
-			tokenSource.cancel()
-		})
+@available(iOS 13.0, *)
+@available(macOS 10.15, *)
+extension Socket {
+	public func createAudioStream() -> AsyncStream<AudioData> {
+		return AsyncStream<AudioData> { continuation in
+			let tokenSource = CancellationTokenSource()
+			continuation.onTermination = { _ in
+				tokenSource.cancel()
+			}
 
-		var description: AudioStreamBasicDescription? = nil
+			var description: AudioStreamBasicDescription?
 
-		let parse = try! AFSUtility.CreateCustomAudioStreamParser(
-			onStreamReady: { (_, asbd, cookieData) in
-				description = asbd.pointee
-		},
-			onPackets: { (_ numBytes: UInt32, _ numPackets: UInt32, _ inputData: UnsafeRawPointer, _ packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>?, _ startTime: UnsafePointer<AudioTimeStamp>?) in
-				stream.publish(AudioData.Create(description!, numBytes, numPackets, inputData, packetDescriptions, startTime))
-		})
+			let parse = try! AFSUtility.createCustomAudioStreamParser(
+				onStreamReady: { (_, asbd, _) in
+					description = asbd.pointee
+				},
+				onPackets: {
+					(
+						_ numBytes: UInt32, _ numPackets: UInt32, _ inputData: UnsafeRawPointer,
+						_ packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>?,
+						_ startTime: UnsafePointer<AudioTimeStamp>?
+					) in
+					continuation.yield(
+						AudioData.create(
+							description!, numBytes, numPackets, inputData, packetDescriptions,
+							startTime))
+				})
 
-		DispatchQueue.global().async {
-			while !tokenSource.isCancellationRequested && self.isValid, let data = self.read(maxBytes: 4 * 1024) {
-				try! parse(data)
+			Task {
+				while !tokenSource.isCancellationRequested && self.isValid,
+					let data = await self.read(maxBytes: 4 * 1024)
+				{
+					try! parse(data)
+				}
 			}
 		}
-
-		return ReadableStream(stream)
 	}
 }

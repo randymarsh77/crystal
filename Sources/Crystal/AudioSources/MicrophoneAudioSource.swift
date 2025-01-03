@@ -1,65 +1,46 @@
-import Foundation
-import AudioToolbox
 import AVFoundation
+import AudioToolbox
+import Foundation
 import IDisposable
 import Scope
-import Streams
 
-public class MicrophoneAudioSource : IAudioSource {
-	private var keepRecording = false
-	private var queue: AudioQueueRef?
-
+@available(iOS 13.0.0, *)
+@available(macOS 10.15, *)
+public class MicrophoneAudioSource: IAudioSource {
 	public init() {}
 
-	public func start(_ onAudio: @escaping (_ stream: ReadableStream<AudioData>) -> ()) -> IDisposable {
-		startRecording(onAudio)
-		return Scope {
-			self.stopRecording()
+	public func start() async -> AsyncStream<AudioData> {
+		guard await getAuthorizationToRecord() else {
+			return emptyStream()
 		}
+
+		let propertyData = try! ASBDFactory.createDefaultDescription(format: kAudioFormatLinearPCM)
+		let stream = AQFactory.createDefaultInputQueue(propertyData: propertyData)
+		return stream
 	}
 
-	private func startRecording(_ onAudio: @escaping (_ stream: ReadableStream<AudioData>) -> ()) {
-		self.keepRecording = true
-		let doStart = {
-			let propertyData = try! ASBDFactory.CreateDefaultDescription(format: kAudioFormatLinearPCM)
-			let (q, audio) = try! AQFactory.CreateDefaultInputQueue(propertyData: propertyData)
-			if (self.keepRecording) {
-				self.queue = q
-				AudioQueueStart(q, nil)
-				onAudio(audio)
-			}
-		}
-
-		if #available(macOS 10.14, *) {
-			switch AVCaptureDevice.authorizationStatus(for: .audio) {
-			case .authorized: // The user has previously granted access to the microphone.
-				doStart()
-				break
-			case .notDetermined: // The user has not yet been asked for microphone access.
+	private func getAuthorizationToRecord() async -> Bool {
+		switch AVCaptureDevice.authorizationStatus(for: .audio) {
+		case .authorized:  // The user has previously granted access to the microphone.
+			return true
+		case .notDetermined:  // The user has not yet been asked for microphone access.
+			return await withCheckedContinuation { continuation in
 				AVCaptureDevice.requestAccess(for: .audio) { granted in
-					if granted {
-						doStart()
-					}
+					continuation.resume(returning: granted)
 				}
-				break
-
-			case .denied: break // The user has previously denied access.
-			case .restricted: // The user can't grant access due to restrictions.
-				break
-			@unknown default:
-				break
 			}
-		} else {
-			// Just try to start
-			doStart()
+		case .denied: break  // The user has previously denied access.
+		case .restricted:  // The user can't grant access due to restrictions.
+			break
+		@unknown default:
+			break
 		}
+		return false
 	}
+}
 
-	private func stopRecording() {
-		self.keepRecording = false
-		if let q = self.queue {
-			AudioQueueStop(q, false)
-			self.queue = nil
-		}
-	}
+@available(iOS 13.0, *)
+@available(macOS 10.15, *)
+private func emptyStream() -> AsyncStream<AudioData> {
+	return AsyncStream<AudioData> { continuation in continuation.finish() }
 }

@@ -1,0 +1,20 @@
+included: 
+  - Sources
+  - Tests
+  - Package.swift
+
+identifier_name:
+  min_length:
+    warning: 0
+    error: 0
+
+disabled_rules:
+  - trailing_comma # SourceKit formatter doesn't add/remove these consistently
+  - no_space_in_method_call # False positive with trailing closure syntax
+  - opening_brace # Formatter is wrapping lines in a way that breaks this
+  - closure_parameter_position # Formatter
+  - force_try # Too many to fix right now
+  - function_body_length # Later...
+  - function_parameter_count # Later...
+  - cyclomatic_complexity # Later...
+  - todo # Stuff todo

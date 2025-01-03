@@ -4,63 +4,68 @@ import Scope
 import Sockets
 import Time
 
-public class StreamServer : IDisposable
-{
-	let stream: SynchronizedDataStreamWithMetadata<Time>
+@available(iOS 13.0, *)
+@available(macOS 10.15.0, *)
+public final actor StreamServer: Sendable, IAsyncDisposable {
+	let stream: AsyncStream<SynchronizedAudioChunk>
 	let synchronizer = TimeSynchronizer()
 	var tcpServer: TCPServer?
 	var connections = [Connection]()
 
-	public init(stream: SynchronizedDataStreamWithMetadata<Time>, port: UInt16) throws
-	{
+	public init(stream: AsyncStream<SynchronizedAudioChunk>, port: UInt16) async throws {
 		self.stream = stream
-		self.tcpServer = try TCPServer(options: ServerOptions(port: .Specific(port))) { (socket) in
-			self.addConnection(socket: socket)
+		tcpServer = try TCPServer(options: ServerOptions(port: .specific(port))) { (socket) in
+			await self.addConnection(socket: socket)
 		}
 	}
 
-	public func dispose() -> Void
-	{
+	public func dispose() async {
 		for connection in self.connections {
-			connection.dispose()
+			await connection.dispose()
 		}
 		self.connections.removeAll()
-		self.tcpServer?.dispose()
-		self.tcpServer = nil
+		await tcpServer?.dispose()
+		tcpServer = nil
 	}
 
-	func addConnection(socket: Socket) -> Void
-	{
-		let token = self.synchronizer.addTarget(socket)
-		let subscription = self.stream.addSubscriber { (data, metadata) in
-			let synchronization = self.synchronizer.syncTarget(token: token, time: metadata)
-			let header = SNSUtility.GenerateHeader(synchronization: synchronization)
-			socket.write(header)
-			socket.write(data)
-		}
-		connections.append(Connection(streamSubscription: subscription, socket: socket))
-	}
+	func addConnection(socket: Socket) async {
+		let t = Task {
+			let token = await self.synchronizer.addTarget(socket)
+			for await data in self.stream {
+				let synchronization = await self.synchronizer.syncTarget(
+					token: token, time: data.time)
+				let header = SNSUtility.generateHeader(synchronization: synchronization)
 
-	class Connection
-	{
-		var subscription: Scope
-		var socket: Socket
-		var onErrorScope: Scope?
-
-		internal init(streamSubscription: Scope, socket: Socket)
-		{
-			self.subscription = streamSubscription
-			self.socket = socket
-			self.onErrorScope = self.socket.registerErrorHandler() {
-				print("socket error")
-				self.dispose()
+				// TODO: Combine into one write
+				await socket.write(header)
+				await socket.write(data.chunk)
 			}
 		}
+		let subscription = Scope {
+			t.cancel()
+		}
+		let connection = Connection(streamSubscription: subscription, socket: socket)
+		_ = await socket.registerErrorHandler {
+			print("socket error")
+			await connection.dispose()
+		}
 
-		internal func dispose() -> Void
-		{
-			self.subscription.dispose()
-			self.socket.dispose()
+		connections.append(connection)
+	}
+
+	@available(iOS 13.0.0, *)
+	final class Connection: Sendable, IAsyncDisposable {
+		let subscription: Scope
+		let socket: Socket
+
+		internal init(streamSubscription: Scope, socket: Socket) {
+			self.subscription = streamSubscription
+			self.socket = socket
+		}
+
+		internal func dispose() async {
+			await self.subscription.dispose()
+			await self.socket.dispose()
 		}
 	}
 }
