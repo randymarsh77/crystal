@@ -27,7 +27,7 @@ public enum AQPlayerChange: Sendable {
 
 @available(iOS 13.0.0, *)
 @available(macOS 10.15, *)
-public actor AQPlayer: IAsyncDisposable {
+public actor AQPlayer: IAsyncDisposable, Sendable {
 	public let propertyValueStream: AsyncStream<AQPlayerChange>
 	private let propertyValueContinuation: AsyncStream<AQPlayerChange>.Continuation
 	private var runningObserverTask: Task<Void, Error>?

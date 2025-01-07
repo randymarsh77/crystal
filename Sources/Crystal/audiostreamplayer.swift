@@ -21,8 +21,8 @@ extension AsyncStream {
 
 @available(iOS 13.0.0, *)
 @available(macOS 10.15.0, *)
-public class V2AudioStreamPlayer: IAsyncDisposable {
-	public var player: AQPlayer
+public actor V2AudioStreamPlayer: IAsyncDisposable, Sendable {
+	public let player: AQPlayer
 
 	var isInitialized = false
 
