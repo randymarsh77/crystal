@@ -39,7 +39,7 @@ public actor AQPlayer: IAsyncDisposable, Sendable {
 	var genBuffer: ((UInt32) throws -> AudioQueueBufferRef)?
 
 	var playing: Bool = false
-	var startTime: SendableShim<UnsafePointer<AudioTimeStamp>>?
+	var startTime: AudioTimeStamp?
 	var buffered: UInt32 = 0
 	var minimumQueues: UInt32 = 3
 
@@ -58,30 +58,20 @@ public actor AQPlayer: IAsyncDisposable, Sendable {
 		self.propertyValueStream = stream
 	}
 
-	private func setStartTime(_ startTime: SendableShim<UnsafePointer<AudioTimeStamp>>) {
-		self.startTime = startTime
-	}
+	public func play(_ audio: AudioData) {
+		let startTime = audio.startTime
+		if self.startTime == nil && startTime != nil {
+			self.startTime = startTime
+		}
 
-	public nonisolated func playPackets(
-		numBytes: UInt32, numPackets: UInt32, inputData: UnsafeRawPointer,
-		packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>?,
-		startTime: UnsafePointer<AudioTimeStamp>?
-	) {
-		let sendableStartTime = SendableShim(startTime)
-		let sendablePackets = SendableShim(packetDescriptions)
-		let sendableInput = SendableShim(inputData)
-		Task {
-			if await self.startTime == nil && sendableStartTime.value != nil {
-				await self.setStartTime(SendableShim(sendableStartTime.value!))
-			}
-
-			if sendablePackets.value != nil {
-				await self.fillBufferWithPackets(
-					data: sendableInput, length: numBytes,
-					packetDescriptions: SendableShim(sendablePackets.value!), numPackets: numPackets
+		audio.data.withUnsafeBytes {
+			if audio.packetDescriptions?.count ?? 0 > 0 {
+				self.fillBufferWithPackets(
+					data: $0.baseAddress!, length: UInt32($0.count),
+					packetDescriptions: audio.packetDescriptions!
 				)
 			} else {
-				await self.fillBufferWithRaw(data: sendableInput, length: numBytes)
+				self.fillBufferWithRaw(data: $0.baseAddress!, length: UInt32($0.count))
 			}
 		}
 	}
@@ -160,35 +150,33 @@ public actor AQPlayer: IAsyncDisposable, Sendable {
 		let ts = stamp.pointee
 		let hostTime = Time.fromSystemTimeStamp(ts.mHostTime)
 		let relative = hostTime - self.queueStartTime!
-		print("Timestamp: \(ts.mSampleTime) \(relative.convert(to: .milliseconds).value)ms")
 		self.propertyValueContinuation.yield(.event(.playTime(ts.mSampleTime, relative)))
 	}
 
-	func fillBufferWithRaw(data: SendableShim<UnsafeRawPointer>, length: UInt32) {
+	func fillBufferWithRaw(data: UnsafeRawPointer, length: UInt32) {
 		self.currentBuffer = try! self.genBuffer!(length)
 		memcpy(
 			self.currentBuffer!.pointee.mAudioData.advanced(by: Int(self.currentPosition)),
-			data.value, Int(length))
+			data, Int(length))
 		self.currentPosition += length
 
 		try! self.advanceBuffer()
 	}
 
 	func fillBufferWithPackets(
-		data: SendableShim<UnsafeRawPointer>, length: UInt32,
-		packetDescriptions: SendableShim<UnsafeMutablePointer<AudioStreamPacketDescription>>,
-		numPackets: UInt32
+		data: UnsafeRawPointer, length: UInt32,
+		packetDescriptions: [AudioStreamPacketDescription]
 	) {
 		self.currentBuffer = try! self.genBuffer!(length)
-		for packetDescription in UnsafeBufferPointer<AudioStreamPacketDescription>(
-			start: UnsafePointer(packetDescriptions.value), count: Int(numPackets))
-		{
+		for packetDescription in packetDescriptions {
 			let packetOffset = packetDescription.mStartOffset
 			let packetSize = packetDescription.mDataByteSize
 
-			memcpy(
-				self.currentBuffer!.pointee.mAudioData.advanced(by: Int(self.currentPosition)),
-				data.value.advanced(by: Int(packetOffset)), Int(packetSize))
+			let src = data.advanced(by: Int(packetOffset))
+			let dest = self.currentBuffer!.pointee.mAudioData.advanced(
+				by: Int(self.currentPosition))
+
+			memcpy(dest, src, Int(packetSize))
 
 			let pd = AudioStreamPacketDescription(
 				mStartOffset: Int64(self.currentPosition),
@@ -201,19 +189,24 @@ public actor AQPlayer: IAsyncDisposable, Sendable {
 	}
 
 	func advanceBuffer() throws {
-		var pd: SendableShim<UnsafeMutablePointer<AudioStreamPacketDescription>>?
-		let pdc = UInt32(self.packetDescriptions.count)
 		self.currentBuffer!.pointee.mAudioDataByteSize = self.currentPosition
-		self.packetDescriptions.withUnsafeBufferPointer { (packetDescriptions) in
-			let descriptionByteSize =
-				self.packetDescriptions.count * MemoryLayout<AudioStreamPacketDescription>.size
-			let copiedDescriptions = malloc(descriptionByteSize)
-			memcpy(copiedDescriptions, packetDescriptions.baseAddress, descriptionByteSize)
 
-			pd = SendableShim(cast(copiedDescriptions!))
+		var pdc: UInt32 = 0
+		var pd: SendableShim<UnsafeMutablePointer<AudioStreamPacketDescription>?> = SendableShim(
+			nil)
+		if self.packetDescriptions.first?.mDataByteSize ?? 0 > 0 {
+			self.packetDescriptions.withUnsafeBufferPointer { (packetDescriptions) in
+				let descriptionByteSize =
+					self.packetDescriptions.count * MemoryLayout<AudioStreamPacketDescription>.size
+				let copiedDescriptions = malloc(descriptionByteSize)
+				memcpy(copiedDescriptions, packetDescriptions.baseAddress, descriptionByteSize)
+
+				pd = SendableShim(cast(copiedDescriptions!))
+				pdc = UInt32(self.packetDescriptions.count)
+			}
 		}
 
-		let result = AudioQueueEnqueueBuffer(self.queue!, self.currentBuffer!, pdc, pd!.value)
+		let result = AudioQueueEnqueueBuffer(self.queue!, self.currentBuffer!, pdc, pd.value)
 		if result != 0 {
 			throw AStreamError.coreAudioError(code: result, message: "AQPlayer: Enqueue Buffer")
 		}

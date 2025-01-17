@@ -14,11 +14,16 @@ func acDataSupplier(
 	let data = userDataPrime!.pointee.data.pointee
 
 	// Only supporting one callback from a compressed format to PCM
-	assert(ioNumberDataPackets.pointee <= data.packetInfo!.count)
-	ioNumberDataPackets.pointee = data.packetInfo!.count
+	assert(ioNumberDataPackets.pointee <= data.packetDescriptions!.count)
+	ioNumberDataPackets.pointee = UInt32(data.packetDescriptions!.count)
 
 	ioData.initialize(to: data.toBufferList())
-	outDataPacketDescription?.initialize(to: data.packetInfo!.descriptions)
+
+	data.packetDescriptions?.withUnsafeBufferPointer {
+		let mutable = UnsafeMutablePointer<AudioStreamPacketDescription>(
+			OpaquePointer($0.baseAddress))
+		outDataPacketDescription?.initialize(to: mutable)
+	}
 
 	return 0
 }
@@ -42,7 +47,7 @@ extension AsyncStream where Element == AudioData {
 				for await data in self {
 					if !converterCreated {
 						converterCreated = true
-						inputFormat.initialize(to: data.description)
+						inputFormat.initialize(to: data.streamDescription)
 						_ = AudioConverterNew(inputFormat, destinationFormat, converter)
 					}
 

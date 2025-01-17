@@ -71,7 +71,7 @@ public final class FileAudioSource: IAudioSource, Sendable {
 				var ioNumPackets: UInt32 = UInt32(min(totalPackets, 128))
 				var position: Int64 = 0
 
-				let pDescRaw = malloc(1024)
+				let pDescRaw = calloc(1024, 1)
 				let pDesc = pDescRaw.unsafelyUnwrapped.assumingMemoryBound(
 					to: AudioStreamPacketDescription.self)
 
@@ -102,6 +102,7 @@ public final class FileAudioSource: IAudioSource, Sendable {
 				}
 
 				AudioFileClose(fileId)
+				continuation.finish()
 			}
 		}
 	}

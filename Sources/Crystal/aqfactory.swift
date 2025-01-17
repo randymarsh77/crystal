@@ -53,7 +53,7 @@ public class AQFactory {
 				aqInputData in
 				if aqInputData.data.count != 0 {
 					let audioData = AudioData(
-						description: propertyData.pointee, packetInfo: nil, data: aqInputData.data,
+						streamDescription: propertyData.pointee, packetDescriptions: nil, data: aqInputData.data,
 						startTime: aqInputData.ts?.pointee)
 					continuation.yield(audioData)
 				}

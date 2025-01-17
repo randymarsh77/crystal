@@ -34,19 +34,14 @@ public actor V2AudioStreamPlayer: IAsyncDisposable, Sendable {
 		await self.player.dispose()
 	}
 
-	public func consume(_ data: AudioData) async {
+	public func consume(_ audio: AudioData) async {
 		if !self.isInitialized {
 			let p = UnsafeMutablePointer<AudioStreamBasicDescription>.allocate(capacity: 1)
-			p.initialize(to: data.description)
+			p.initialize(to: audio.streamDescription)
 			try! await player.initialize(asbd: p, cookieData: nil)
 			self.isInitialized = true
 		}
-		data.data.withUnsafeBytes {
-			player.playPackets(
-				numBytes: UInt32(data.data.count), numPackets: data.packetInfo?.count ?? 0,
-				inputData: $0.baseAddress!, packetDescriptions: data.packetInfo?.descriptions,
-				startTime: asPointer(data.startTime))
-		}
+		await player.play(audio)
 	}
 }
 

@@ -30,7 +30,7 @@ extension AsyncStream where Element == AudioData {
 
 		for await data in self {
 			if audioFile == nil && audioError == noErr {
-				var asbd = data.description
+				var asbd = data.streamDescription
 				let fileType = try! convertFormatToFileType(format: asbd.mFormatID)
 				audioError = AudioFileCreateWithURL(
 					fileURL as CFURL, fileType, &asbd, .eraseFile, &audioFile)

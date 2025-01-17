@@ -1,15 +1,11 @@
 import AudioToolbox
+import Cast
 import Foundation
 import Time
 
-public struct PacketInfo: @unchecked Sendable {
-	public let descriptions: UnsafeMutablePointer<AudioStreamPacketDescription>
-	public let count: UInt32
-}
-
 public struct AudioData: Sendable {
-	public let description: AudioStreamBasicDescription
-	public let packetInfo: PacketInfo?
+	public let streamDescription: AudioStreamBasicDescription
+	public let packetDescriptions: [AudioStreamPacketDescription]?
 	public let data: Data
 	public let startTime: AudioTimeStamp?
 
@@ -19,18 +15,32 @@ public struct AudioData: Sendable {
 		_ packetDescriptions: UnsafeMutablePointer<AudioStreamPacketDescription>?,
 		_ startTime: UnsafePointer<AudioTimeStamp>?
 	) -> AudioData {
-		let packetInfo =
-			numPackets != 0 ? PacketInfo(descriptions: packetDescriptions!, count: numPackets) : nil
 		let data = Data(bytes: inputData, count: Int(numBytes))
+		if numPackets == 0 {
+			return AudioData(
+				streamDescription: description, packetDescriptions: nil, data: data,
+				startTime: startTime?.pointee)
+		}
+
+		var descriptions = [AudioStreamPacketDescription](
+			repeating: AudioStreamPacketDescription(), count: Int(numPackets))
+		let packetData = Data(
+			bytesNoCopy: packetDescriptions!, count: Int(numPackets), deallocator: .none)
+		packetData.withUnsafeBytes { src in
+			descriptions.withUnsafeMutableBytes { dest in
+				_ = src.copyBytes(to: dest)
+			}
+		}
 		return AudioData(
-			description: description, packetInfo: packetInfo, data: data,
+			streamDescription: description, packetDescriptions: descriptions, data: data,
 			startTime: startTime?.pointee)
 	}
 }
 
 extension AudioData {
 	public func totalTime() -> Time {
-		let bytesPerSecond = Float64(description.mBytesPerFrame) * description.mSampleRate
+		let bytesPerSecond =
+			Float64(streamDescription.mBytesPerFrame) * streamDescription.mSampleRate
 		let seconds = Float64(data.count) / bytesPerSecond
 		return Time.fromInterval(seconds, unit: .seconds)
 	}
@@ -43,7 +53,7 @@ extension AudioData {
 			let b = UnsafeMutablePointer(
 				mutating: $0.baseAddress!.assumingMemoryBound(to: UInt8.self))
 			buffer = AudioBuffer(
-				mNumberChannels: self.description.mChannelsPerFrame,
+				mNumberChannels: self.streamDescription.mChannelsPerFrame,
 				mDataByteSize: UInt32(self.data.count), mData: b)
 		}
 		return AudioBufferList(mNumberBuffers: 1, mBuffers: buffer!)
@@ -67,7 +77,7 @@ extension AudioBufferList {
 			let buffer = self.mBuffers
 			datas.append(
 				AudioData(
-					description: using, packetInfo: nil,
+					streamDescription: using, packetDescriptions: nil,
 					data: Data(bytes: buffer.mData!, count: Int(buffer.mDataByteSize)),
 					startTime: i == 0 ? startingAt : nil))
 		}
