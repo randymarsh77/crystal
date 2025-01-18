@@ -9,14 +9,13 @@ import Scope
 public class MicrophoneAudioSource: IAudioSource {
 	public init() {}
 
-	public func start() async -> AsyncStream<AudioData> {
+	public func start() async -> (Scope, AsyncStream<AudioData>) {
 		guard await getAuthorizationToRecord() else {
-			return emptyStream()
+			return (Scope(dispose: nil), emptyStream())
 		}
 
 		let propertyData = try! ASBDFactory.createDefaultDescription(format: kAudioFormatLinearPCM)
-		let stream = AQFactory.createDefaultInputQueue(propertyData: propertyData)
-		return stream
+		return AQFactory.createDefaultInputQueue(propertyData: propertyData)
 	}
 
 	private func getAuthorizationToRecord() async -> Bool {

@@ -1,6 +1,8 @@
 import AudioToolbox
+import Cancellation
 import Cast
 import Foundation
+import Scope
 
 func aqInputCallback(
 	userData: UnsafeMutableRawPointer?, queue: AudioQueueRef, bufferPointer: AudioQueueBufferRef,
@@ -47,27 +49,38 @@ struct SendableQueue: @unchecked Sendable {
 public class AQFactory {
 	public static func createDefaultInputQueue(
 		propertyData: UnsafeMutablePointer<AudioStreamBasicDescription>
-	) -> AsyncStream<AudioData> {
-		return AsyncStream<AudioData> { continuation in
-			let maybeQueue = try? createDefaultInputQueue(propertyData: propertyData) {
-				aqInputData in
-				if aqInputData.data.count != 0 {
-					let audioData = AudioData(
-						streamDescription: propertyData.pointee, packetDescriptions: nil, data: aqInputData.data,
-						startTime: aqInputData.ts?.pointee)
-					continuation.yield(audioData)
+	) -> (Scope, AsyncStream<AudioData>) {
+		let cts = CancellationTokenSource()
+		let scope = Scope { cts.cancel() }
+		return (
+			scope,
+			AsyncStream<AudioData> { continuation in
+				let maybeQueue = try? createDefaultInputQueue(propertyData: propertyData) {
+					aqInputData in
+					if aqInputData.data.count != 0 {
+						let audioData = AudioData(
+							streamDescription: propertyData.pointee, packetDescriptions: nil,
+							data: aqInputData.data,
+							startTime: aqInputData.ts?.pointee)
+						continuation.yield(audioData)
+					}
+				}
+				if let queue = maybeQueue {
+					let sendable = SendableQueue(queue: queue)
+					let observation = try! cts.token.register {
+						continuation.finish()
+					}
+					continuation.onTermination = { _ in
+						AudioQueueStop(sendable.queue, false)
+						observation.dispose()
+						cts.dispose()
+					}
+					AudioQueueStart(queue, nil)
+				} else {
+					continuation.finish()
 				}
 			}
-			if let queue = maybeQueue {
-				let sendable = SendableQueue(queue: queue)
-				continuation.onTermination = { _ in
-					AudioQueueStop(sendable.queue, false)
-				}
-				AudioQueueStart(queue, nil)
-			} else {
-				continuation.finish()
-			}
-		}
+		)
 	}
 
 	public static func createDefaultInputQueue(
