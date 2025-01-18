@@ -72,6 +72,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Apple Bonjour headers
+        run: |
+          apt-get update
+          apt-get install -y libavahi-compat-libdnssd-dev
+
       - name: Lint
         uses: cirruslabs/swiftlint-action@v1
         with:
